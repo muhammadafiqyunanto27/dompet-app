@@ -1,61 +1,112 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard Keuangan</title>
   <style>
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #333;
+      --container-bg: #f9f9f9;
+      --primary: #007bff;
+      --primary-hover: #0056b3;
+      --danger: #dc3545;
+      --warning: #ffc107;
+      --table-header: #007bff;
+      --table-header-text: #ffffff;
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #121212;
+      --text-color: #e0e0e0;
+      --container-bg: #1e1e1e;
+      --primary: #66aaff;
+      --primary-hover: #3a80d8;
+      --danger: #ff6b6b;
+      --warning: #ffdd57;
+      --table-header: #222;
+      --table-header-text: #e0e0e0;
+    }
+
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f8f9fa;
       margin: 0;
-      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
     }
 
     .container {
-      max-width: 800px;
-      margin: 3rem auto;
+      max-width: 900px;
+      margin: 2rem auto;
       padding: 2rem;
-      background-color: white;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background-color: var(--container-bg);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
       border-radius: 8px;
+      transition: background-color 0.3s;
+      position: relative;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
     }
 
     h1 {
-      text-align: center;
-      margin-bottom: 2rem;
+      margin: 0;
+    }
+
+    .top-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .theme-toggle, .logout-button {
+      padding: 0.4rem 0.8rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .logout-button {
+      background-color: var(--danger);
     }
 
     form {
       display: flex;
+      gap: 0.5rem;
       flex-wrap: wrap;
-      gap: 1rem;
-      margin-bottom: 2rem;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
     }
 
-    form input,
-    form button {
-      padding: 0.7rem;
+    form input, form button {
+      padding: 0.5rem;
       font-size: 1rem;
-      border: 1px solid #ccc;
       border-radius: 4px;
+      border: 1px solid #ccc;
     }
 
     form input {
       flex: 1 1 30%;
+      min-width: 150px;
     }
 
     form button {
-      background-color: #007bff;
+      background-color: var(--primary);
       color: white;
       border: none;
-      flex: 1 1 100%;
       cursor: pointer;
+      transition: background-color 0.3s;
     }
 
     form button:hover {
-      background-color: #0056b3;
+      background-color: var(--primary-hover);
     }
 
     table {
@@ -63,19 +114,23 @@
       border-collapse: collapse;
     }
 
-    th,
-    td {
-      padding: 1rem;
-      border-bottom: 1px solid #dee2e6;
+    table th, table td {
+      padding: 0.75rem;
       text-align: left;
+      border-bottom: 1px solid #ccc;
     }
 
-    th {
-      background-color: #f1f1f1;
+    table th {
+      background-color: var(--table-header);
+      color: var(--table-header-text);
+    }
+
+    table tr:nth-child(even) {
+      background-color: rgba(0, 0, 0, 0.03);
     }
 
     .actions button {
-      margin-right: 0.5rem;
+      margin-right: 0.3rem;
       padding: 0.3rem 0.6rem;
       border: none;
       border-radius: 3px;
@@ -83,34 +138,35 @@
     }
 
     .edit-btn {
-      background-color: #ffc107;
-      color: #212529;
+      background-color: var(--warning);
+      color: black;
     }
 
     .delete-btn {
-      background-color: #dc3545;
+      background-color: var(--danger);
       color: white;
-    }
-
-    .actions button:hover {
-      opacity: 0.85;
     }
   </style>
 </head>
-
-<body>
+<body data-theme="light">
   <div class="container">
-    <h1>Dashboard Keuangan</h1>
+    <div class="header">
+      <h1>Dashboard Keuangan</h1>
+      <div class="top-buttons">
+        <button class="theme-toggle" onclick="toggleTheme()">🌓 Mode</button>
+        <button class="logout-button" onclick="logout()">Keluar</button>
+      </div>
+    </div>
 
     <form id="transaction-form">
       <input type="hidden" id="edit-id" />
       <input type="text" id="title" placeholder="Judul transaksi" required />
       <input type="number" id="amount" placeholder="Jumlah (Rp)" required />
-      <input type="date" id="date" placeholder="date" required />
+      <input type="date" id="date" />
       <button type="submit">Simpan</button>
     </form>
 
-    <table>
+    <table id="transaction-table">
       <thead>
         <tr>
           <th>Judul</th>
@@ -124,6 +180,28 @@
   </div>
 
   <script>
+    function toggleTheme() {
+      const body = document.body;
+      const currentTheme = body.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      body.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    }
+
+    function logout() {
+      fetch('/api/auth/logout', { method: 'POST' })
+        .then(() => location.href = '/login.html')
+        .catch(err => alert('Logout gagal!'));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        document.body.setAttribute('data-theme', savedTheme);
+      }
+      fetchTransactions();
+    });
+
     async function fetchTransactions() {
       const res = await fetch('/api/transactions');
       const transactions = await res.json();
@@ -136,7 +214,7 @@
           <td>${tx.title}</td>
           <td>${new Date(tx.createdAt).toLocaleDateString()}</td>
           <td>Rp ${tx.amount.toLocaleString('id-ID')}</td>
-          <td class="actions">
+          <td>
             <button class="edit-btn" onclick="editTransaction(${tx.id}, '${tx.title}', ${tx.amount}, '${tx.createdAt}')">Edit</button>
             <button class="delete-btn" onclick="deleteTransaction(${tx.id})">Hapus</button>
           </td>
@@ -163,7 +241,12 @@
       const id = document.getElementById('edit-id').value;
       const title = document.getElementById('title').value;
       const amount = parseInt(document.getElementById('amount').value);
-      const date = document.getElementById('date').value;
+      let date = document.getElementById('date').value;
+
+      if (!date) {
+        const today = new Date();
+        date = today.toISOString().split('T')[0];
+      }
 
       const method = id ? 'PUT' : 'POST';
       const endpoint = '/api/transactions' + (id ? `?id=${id}` : '');
@@ -177,9 +260,6 @@
       document.getElementById('transaction-form').reset();
       fetchTransactions();
     });
-
-    fetchTransactions();
   </script>
 </body>
-
 </html>

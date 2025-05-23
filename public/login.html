@@ -1,219 +1,125 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <title>Dashboard Keuangan</title>
+  <meta charset="utf-8">
+  <title>Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #333;
+      --form-bg: #f9f9f9;
+      --primary: #007bff;
+      --primary-hover: #0056b3;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-color: #121212;
+        --text-color: #e0e0e0;
+        --form-bg: #1e1e1e;
+        --primary: #66aaff;
+        --primary-hover: #3a80d8;
+      }
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f6f8;
       margin: 0;
-      padding: 40px;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       display: flex;
+      align-items: center;
       justify-content: center;
+      height: 100vh;
     }
 
-    .container {
-      background-color: white;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      max-width: 600px;
+    .login-container {
+      background-color: var(--form-bg);
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
       width: 100%;
+      max-width: 400px;
     }
 
-    h1, h2 {
-      color: #333;
-      margin-bottom: 20px;
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
     }
 
     form {
       display: flex;
       flex-direction: column;
-      gap: 15px;
-      margin-bottom: 30px;
+      gap: 1rem;
     }
 
-    label {
-      font-weight: bold;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    input[type="date"] {
-      padding: 10px;
-      border-radius: 5px;
+    input {
+      padding: 0.6rem;
+      font-size: 1rem;
       border: 1px solid #ccc;
-      font-size: 14px;
-      width: 100%;
+      border-radius: 4px;
     }
 
     button {
-      padding: 10px;
-      background-color: #007bff;
+      padding: 0.6rem;
+      font-size: 1rem;
+      background-color: var(--primary);
       color: white;
       border: none;
-      border-radius: 5px;
-      font-size: 16px;
+      border-radius: 4px;
       cursor: pointer;
     }
 
     button:hover {
-      background-color: #0056b3;
+      background-color: var(--primary-hover);
     }
 
-    ul {
-      list-style: none;
-      padding: 0;
-      margin-top: 20px;
+    .register-link {
+      margin-top: 1rem;
+      text-align: center;
     }
 
-    li {
-      background-color: #f9fafb;
-      border: 1px solid #e0e0e0;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 10px;
+    .register-link a {
+      color: var(--primary);
+      text-decoration: none;
     }
 
-    .tx-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .tx-date {
-      font-size: 13px;
-      color: #777;
-    }
-
-    .tx-amount {
-      font-weight: bold;
-      color: #007bff;
-    }
-
-    .actions button {
-      margin-left: 10px;
-      padding: 6px 10px;
-      font-size: 13px;
-      border-radius: 4px;
-    }
-
-    .edit-btn {
-      background-color: #28a745;
-    }
-
-    .edit-btn:hover {
-      background-color: #218838;
-    }
-
-    .delete-btn {
-      background-color: #dc3545;
-    }
-
-    .delete-btn:hover {
-      background-color: #c82333;
+    .register-link a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Dashboard Keuangan</h1>
-
-    <form id="transaction-form">
-      <input type="hidden" id="edit-id" />
-      <div>
-        <label for="title">Judul Transaksi</label>
-        <input type="text" id="title" name="title" required />
-      </div>
-
-      <div>
-        <label for="amount">Jumlah</label>
-        <input type="number" id="amount" name="amount" required />
-      </div>
-
-      <div>
-        <label for="date">Tanggal (opsional)</label>
-        <input type="date" id="date" name="date" />
-      </div>
-
-      <button type="submit">Simpan Transaksi</button>
+  <div class="login-container">
+    <h1>Login</h1>
+    <form id="login-form">
+      <input type="text" id="username" placeholder="Username" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button type="submit">Login</button>
     </form>
-
-    <div>
-      <h2>Riwayat Transaksi</h2>
-      <ul id="transactions-list"></ul>
+    <div class="register-link">
+      Belum punya akun? <a href="/register.html">Daftar di sini</a>
     </div>
   </div>
 
   <script>
-    async function fetchTransactions() {
-      const res = await fetch('/api/transactions');
-      const data = await res.json();
-      const list = document.getElementById('transactions-list');
-      list.innerHTML = '';
-      data.forEach(tx => {
-        const item = document.createElement('li');
-        item.innerHTML = `
-          <div class="tx-item">
-            <div>
-              <div><strong>${tx.title}</strong></div>
-              <div class="tx-date">${new Date(tx.createdAt).toLocaleDateString()}</div>
-            </div>
-            <div class="tx-amount">${tx.amount.toLocaleString('id-ID')}</div>
-          </div>
-          <div class="actions">
-            <button class="edit-btn" onclick="editTransaction(${tx.id}, '${tx.title}', ${tx.amount}, '${tx.createdAt}')">Edit</button>
-            <button class="delete-btn" onclick="deleteTransaction(${tx.id})">Hapus</button>
-          </div>
-        `;
-        list.appendChild(item);
-      });
-    }
-
-    async function deleteTransaction(id) {
-      if (!confirm('Yakin ingin menghapus transaksi ini?')) return;
-      await fetch(`/api/transactions?id=${id}`, { method: 'DELETE' });
-      fetchTransactions();
-    }
-
-    function editTransaction(id, title, amount, date) {
-      document.getElementById('edit-id').value = id;
-      document.getElementById('title').value = title;
-      document.getElementById('amount').value = amount;
-      document.getElementById('date').value = new Date(date).toISOString().split('T')[0];
-    }
-
-    document.getElementById('transaction-form').addEventListener('submit', async (e) => {
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const form = e.target;
-      const id = document.getElementById('edit-id').value;
-      const title = form.title.value;
-      const amount = parseInt(form.amount.value);
-      const date = form.date.value;
-
-      if (id) {
-        // Update
-        await fetch(`/api/transactions?id=${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, amount, date }),
-        });
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        location.href = '/dashboard.html';
       } else {
-        // Create
-        await fetch('/api/transactions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, amount, date }),
-        });
+        alert(data.error);
       }
-
-      form.reset();
-      document.getElementById('edit-id').value = '';
-      fetchTransactions();
     });
-
-    fetchTransactions();
   </script>
 </body>
 </html>
