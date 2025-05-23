@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Keuangan</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    form input,
+    form button {
+      padding: 0.7rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    form input {
+      flex: 1 1 30%;
+    }
+
+    form button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      flex: 1 1 100%;
+      cursor: pointer;
+    }
+
+    form button:hover {
+      background-color: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 1rem;
+      border-bottom: 1px solid #dee2e6;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f1f1f1;
+    }
+
+    .actions button {
+      margin-right: 0.5rem;
+      padding: 0.3rem 0.6rem;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .edit-btn {
+      background-color: #ffc107;
+      color: #212529;
+    }
+
+    .delete-btn {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .actions button:hover {
+      opacity: 0.85;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Dashboard Keuangan</h1>
+
+    <form id="transaction-form">
+      <input type="hidden" id="edit-id" />
+      <input type="text" id="title" placeholder="Judul transaksi" required />
+      <input type="number" id="amount" placeholder="Jumlah (Rp)" required />
+      <input type="date" id="date" placeholder="date" required />
+      <button type="submit">Simpan</button>
+    </form>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Judul</th>
+          <th>Tanggal</th>
+          <th>Jumlah</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="transaction-list"></tbody>
+    </table>
+  </div>
+
+  <script>
+    async function fetchTransactions() {
+      const res = await fetch('/api/transactions');
+      const transactions = await res.json();
+      const list = document.getElementById('transaction-list');
+      list.innerHTML = '';
+
+      transactions.forEach(tx => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${tx.title}</td>
+          <td>${new Date(tx.createdAt).toLocaleDateString()}</td>
+          <td>Rp ${tx.amount.toLocaleString('id-ID')}</td>
+          <td class="actions">
+            <button class="edit-btn" onclick="editTransaction(${tx.id}, '${tx.title}', ${tx.amount}, '${tx.createdAt}')">Edit</button>
+            <button class="delete-btn" onclick="deleteTransaction(${tx.id})">Hapus</button>
+          </td>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function editTransaction(id, title, amount, date) {
+      document.getElementById('edit-id').value = id;
+      document.getElementById('title').value = title;
+      document.getElementById('amount').value = amount;
+      document.getElementById('date').value = new Date(date).toISOString().split('T')[0];
+    }
+
+    async function deleteTransaction(id) {
+      if (!confirm('Yakin ingin menghapus transaksi ini?')) return;
+      await fetch(`/api/transactions?id=${id}`, { method: 'DELETE' });
+      fetchTransactions();
+    }
+
+    document.getElementById('transaction-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-id').value;
+      const title = document.getElementById('title').value;
+      const amount = parseInt(document.getElementById('amount').value);
+      const date = document.getElementById('date').value;
+
+      const method = id ? 'PUT' : 'POST';
+      const endpoint = '/api/transactions' + (id ? `?id=${id}` : '');
+
+      await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, amount, date }),
+      });
+
+      document.getElementById('transaction-form').reset();
+      fetchTransactions();
+    });
+
+    fetchTransactions();
+  </script>
+</body>
+
+</html>
